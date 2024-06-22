@@ -140,6 +140,7 @@
                         $result_sub = $bukis_sorted[$pointer][1];
                         $result_spe = $bukis_sorted[$pointer][2];
                         $result_hit = $bukis_sorted[$pointer][4];
+                        $result_range = $bukis_sorted[$pointer][5];
                         // 回した回数記録ファイル（r-count.dat）を開き、総抽選回数を更新
                         $rcfile = fopen('r-count.dat', 'r+b');
                         flock($rcfile, LOCK_EX);
