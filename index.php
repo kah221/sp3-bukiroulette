@@ -66,21 +66,23 @@
         $_POST['type'] = $_POST['type'];
         $_POST['sub'] = $_POST['sub'];
         $_POST['spe'] = $_POST['spe'];
+        $_POST['range'] = $_POST['range'];
         $_POST['hit'] = $_POST['hit'];
-        $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+        $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
         $bukis_sorted = $buki_data_all;
     }else{
         // echo '絞り込み条件がリセットされた<br>';
         $_POST['type'] = ['shooter', 'roller', 'charger', 'slosher', 'maneuver', 'shelter', 'spinner', 'fude', 'stringer', 'wiper','blaster'];
         $_POST['sub'] = ['スプラッシュボム', 'キューバンボム', 'クイックボム', 'スプリンクラー', 'スプラッシュシールド', 'タンサンボム', 'カーリングボム', 'ロボットボム', 'ジャンプビーコン', 'ポイントセンサー', 'トラップ', 'ポイズンミスト', 'ラインマーカー', 'トーピード'];
         $_POST['spe'] = ['ウルトラショット', 'グレートバリア', 'ショクワンダー', 'マルチミサイル', 'アメフラシ', 'ナイスダマ', 'ホップソナー', 'キューインキ', 'メガホンレーザー5.1ch', 'ジェットパック', 'ウルトラハンコ', 'カニタンク', 'サメライド', 'トリプルトルネード', 'エナジースタンド', 'デコイチラシ', 'テイオウイカ', 'ウルトラチャクチ', 'スミナガシート'];
+        $_POST['range'] = ['短距離級', '中距離級', '長距離級'];
         $_POST['hit'] = ['1', '2', '3', '4', '5'];
-        $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+        $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
         $bukis_sorted = $buki_data_all;
     }
 
     // ------------------------------------------------------------関数
-    function doSort($bukis, $tys, $sbs, $sps, $hits){
+    function doSort($bukis, $tys, $sbs, $sps, $hits, $ranges){
         // echo 'doSort()関数が呼び出された';
         $ids = [];// 当てはまる武器情報を格納
 
@@ -106,8 +108,13 @@
                     $flag ++;
                 }
             }
+            foreach($ranges as $range){
+                if(strval($bukis[$i][5]) == $range){
+                    $flag ++;
+                }
+            }
             // array_push($flags, $flag); // array_push(何処に, 何を);
-            if($flag == 4){
+            if($flag == 5){
                 array_push($ids, $bukis[$i]);
             }
         }
@@ -122,7 +129,7 @@
             switch ($command) {
                 case 'trigger':
                     // 絞り込み実施
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     if(count($bukis_sorted) == 0){
                         $result_none = '条件に合うブキがありません';
                     }else{
@@ -146,56 +153,64 @@
                     $_POST['type'] = ['shooter', 'roller', 'charger', 'slosher', 'maneuver', 'shelter', 'spinner', 'fude', 'stringer', 'wiper', 'blaster'];
                     $_POST['sub'] = ['スプラッシュボム', 'キューバンボム', 'クイックボム', 'スプリンクラー', 'スプラッシュシールド', 'タンサンボム', 'カーリングボム', 'ロボットボム', 'ジャンプビーコン', 'ポイントセンサー', 'トラップ', 'ポイズンミスト', 'ラインマーカー', 'トーピード'];
                     $_POST['spe'] = ['ウルトラショット', 'グレートバリア', 'ショクワンダー', 'マルチミサイル', 'アメフラシ', 'ナイスダマ', 'ホップソナー', 'キューインキ', 'メガホンレーザー5.1ch', 'ジェットパック', 'ウルトラハンコ', 'カニタンク', 'サメライド', 'トリプルトルネード', 'エナジースタンド', 'デコイチラシ', 'テイオウイカ', 'ウルトラチャクチ', 'スミナガシート'];
+                    $_POST['range'] = ['短距離級', '中距離級', '長距離級'];
                     $_POST['hit'] = ['1', '2', '3', '4', '5'];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'allnothing':
                     $_POST['type'] = [];
                     $_POST['sub'] = [];
                     $_POST['spe'] = [];
+                    $_POST['range'] = [];
                     $_POST['hit'] = [];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'sortcheck':
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'type-allselect':
                     $_POST['type'] = ['shooter', 'roller', 'charger', 'slosher', 'maneuver', 'shelter', 'spinner', 'fude', 'stringer', 'wiper', 'blaster'];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'type-allnothing':
                     $_POST['type'] = [];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'sub-allselect':
                     $_POST['sub'] = ['スプラッシュボム', 'キューバンボム', 'クイックボム', 'スプリンクラー', 'スプラッシュシールド', 'タンサンボム', 'カーリングボム', 'ロボットボム', 'ジャンプビーコン', 'ポイントセンサー', 'トラップ', 'ポイズンミスト', 'ラインマーカー', 'トーピード'];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'sub-allnothing':
                     $_POST['sub'] = [];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'spe-allselect':
                     $_POST['spe'] = ['ウルトラショット', 'グレートバリア', 'ショクワンダー', 'マルチミサイル', 'アメフラシ', 'ナイスダマ', 'ホップソナー', 'キューインキ', 'メガホンレーザー5.1ch', 'ジェットパック', 'ウルトラハンコ', 'カニタンク', 'サメライド', 'トリプルトルネード', 'エナジースタンド', 'デコイチラシ', 'テイオウイカ', 'ウルトラチャクチ', 'スミナガシート'];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'spe-allnothing':
                     $_POST['spe'] = [];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
+                    break;
+                case 'range-allselect':
+                    $_POST['range'] = ['短距離級', '中距離級', '長距離級'];
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
+                    break;
+                case 'range-allnothing':
+                    $_POST['range'] = [];
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'hit-allselect':
                     $_POST['hit'] = ['1', '2', '3', '4', '5'];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
                 case 'hit-allnothing':
                     $_POST['hit'] = [];
-                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit']);
+                    $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     break;
             }
         }
     }
-
 
     ?>
 
@@ -281,6 +296,7 @@
                                     echo '<p style="text-align: center; margin: 0 0 4px 0; font-size: 25px;">'.$result_main.'</p>';
                                     echo '<p style="text-align: center; margin: 0 0 4px 0; font-size: 18px;">'.$result_sub.'</p>';
                                     echo '<p style="text-align: center; margin: 0 0 4px 0; font-size: 18px;">'.$result_spe.'</p>';
+                                    echo '<p style="text-align: center; margin: 0 0 4px 0; font-size: 18px;">'.$result_range.'</p>';
                                     echo '<p style="text-align: center; margin: 0;" font-size: 18px;>'.$result_hit.'確</p>';
                                 }
                             }else{
@@ -565,6 +581,31 @@
                             ><label for="スミナガシート">スミナガシート</label><br>
                         </div>
                     </div>
+                    <hr>
+                    <div class="range">
+                        <h2>射程
+                        <button type="submit" name="command" value="range-allselect">射程全選択</button>
+                        <button type="submit" name="command" value="range-allnothing">射程全解除</button>
+                        </h2>
+                        <div>
+                            <input type="checkbox" name="range[]" value="短距離級" id="短距離級"
+                                <?php
+                                    if(isset($_POST['range']) and in_array('短距離級', $_POST['range'])){echo 'checked=""';}
+                                ?>
+                                ><label for="短距離級">短距離級</label><br>
+                            <input type="checkbox" name="range[]" value="中距離級" id="中距離級"
+                                <?php
+                                    if(isset($_POST['range']) and in_array('中距離級', $_POST['range'])){echo 'checked=""';}
+                                ?>
+                                ><label for="中距離級">中距離級</label><br>
+                            <input type="checkbox" name="range[]" value="長距離級" id="長距離級"
+                                <?php
+                                    if(isset($_POST['range']) and in_array('長距離級', $_POST['range'])){echo 'checked=""';}
+                                ?>
+                                ><label for="長距離級">長距離級</label><br>
+                        </div>
+                    </div>
+
                     <hr>
                     <div class="hit">
                         <h2>確定数
