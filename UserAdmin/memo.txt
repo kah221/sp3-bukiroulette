@@ -1,0 +1,58 @@
+'''
+■ ユーザのデータベースへのアクセスが必要なので、phpMyAdminに接続する
+- $pdo = new PDO("mysql:dbname=データベース名;host=ホスト名;", "ユーザ名", "パスワード");
+  PDOというphpに組み込まれているクラスを利用する
+'''
+
+
+
+- 一度入力してもらって、不備があった場合は赤文字で表示させるために、formのactionは自身（login.php）にしておく。
+- formが送信されたときに、結果に応じてPOST変数のresultというキーの中に、success, failed　が格納されるようにする。
+- login.phpが開かれたときに、POST変数のresult=>の中身がsuccessならば、ログイン成功画面又は元のindex画面にリダイレクトさせる。
+- 何処に不備があったかなどで処理を分岐させるために、failedだけではなく、起こりうる不備分だけパターンを用意しておく。
+
+- いや、結局login.phpが開かれたタイミングでDBを読み込み、POSTで送られてきた処理によって分岐するので、result内にsuccessやfailedなどの判別の値は不要。
+- resultキーに対する値に　何かがある　or　無い　だけでよい。
+    - 何かしらがあるならば入力された情報があるということになり、
+    - DBのデータと比較する
+    - その結果、OKならindexへリダイレクト、NGならもう一度やらせる。
+    - そのあと、POST変数を初期化しておく。
+
+- 結局、
+- 入力されたユーザ名は      $_POST['input_user_name']
+- 入力されたパスワードは    $_POST['input_password']
+に格納されるようにした。
+        ユーザ名<input type="text" id="user_name" name="input_user_name"><br>
+        パスワード<input type="text" id="password" name="input_password">
+
+
+- editprofieからユーザ情報を更新した後、pofileやindexでは以前のユーザ情報のままになっている
+- ↑DB上ではデータが更新されている。
+  - index, profile, 全てのページで、ユーザ情報は都度DBから再取得する必要がある
+  - 解決策↓
+
+
+// ------------------------------①ログイン状況を確認
+session_start();
+if($_SESSION['login_with'] != []){ // ログインできているときのみ動く
+    $user_id = $_SESSION['login_with'][0];                              ★ここで取得しているのはあくまで現在のログイン状況を得るため
+}else{
+    header("Location:../index.php");
+    exit();
+}
+
+// ------------------------------③データを取得
+$pdo->query('SET NAMES utf8;'); // 文字化け回避
+// usersテーブルから全てのカラム（ユーザid, ユーザ名, ｻｲﾝｱｯﾌﾟ日時, ラストログイン日時, 一言）を取得する
+$stmt = $pdo->prepare('SELECT user_id, user_name, signup_date, last_login, hitokoto FROM users WHERE user_id = :user_id');
+$stmt->bindParam(':user_id', $user_id); // プレースホルダにバインド（セキュリティ上必要）
+$stmt->execute(); // SQL実行
+$user_data = $stmt->fetchAll();
+
+
+// データを変数に入れる                              ★ここでDBのデータで書き換える
+$user_id = $user_data[0]['user_id'];
+$user_name = $user_data[0]['user_name'];
+$hitokoto = $user_data[0]['hitokoto'];
+$signup_date = $user_data[0]['signup_date'];
+$last_login = $user_data[0]['last_login'];

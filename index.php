@@ -43,6 +43,15 @@
     }
     fclose($tmfile);
 
+    // ------------------------------------------------------------ログイン セッションで
+    // var_dump($_SESSION['login_with']);
+    $login_with = $_SESSION['login_with'][1];
+    echo "<script>console.log('login_with: $login_with');</script>";
+    
+
+
+
+
     // ------------------------------------------------------------初回ｱｸｾｽ
     // ------------------------------武器データ取得
     $csv_file = fopen("buki-data.csv", "r");
@@ -213,6 +222,41 @@
         }
     }
 
+    // ------------------------------------------------------------ログイン系処理
+    // ------------------------------------------------------------自身へのPOSTかつ、ボタン毎の処理分岐
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを判別
+        if (isset($_POST['user_command'])) {         // ボタンタグに付随するinputタグのname=""の部分　キー名自分で指定
+            $command = $_POST['user_command'];       // キー名を変数に入れておく。
+            echo "<script>console.log('user_command: $command');</script>";
+            switch ($command) {                 // ここからボタン毎の処理分岐
+                case 'logout':                 // 例えばinputタグのvalue=""の部分が trigger ならここが動作。
+                    header("Location:./UserAdmin/logout.php");
+                    exit();                    
+                    break;
+                case 'profile':
+                    header("Location:./UserAdmin/profile.php");
+                    exit();                    
+                    break;
+                case 'favorite':
+                    header("Location:./Favorite/mylist.php");
+                    exit();                        
+                    break;
+                case 'signup';
+                    header("Location:./UserAdmin/signup.php");
+                    exit();
+                    break;
+                case 'login';
+                    header("Location:./UserAdmin/login.php");
+                    exit();
+                    break;
+                case 'wtenable';
+                    break;
+            }
+        }
+        // POST変数の中身を削除するなどの操作は特別必要ない多分
+    }
+
+
     ?>
 
         <!DOCTYPE html>
@@ -233,6 +277,13 @@
                 }
                 h2 {
                     font-size: 20px;
+                }
+                p {
+                    margin:0;
+                }
+                .h1 a {
+                    text-decoration: none;
+                    color: #000;
                 }
                 .mawasu-button-area {
                     position: relative;
@@ -281,12 +332,187 @@
                     justify-content: center;
                     align-items: center;
                 }
+                .login {
+                    width: 100%;
+                    height: auto;
+                }
+
+                /* ログイン状態のトグル */
+                /* ログイン状態蘭のボタンスタイル */
+                .user_command_button {    /* ボタンの見た目 親要素*/
+                    position: relative;
+                    width: 100px;
+                    height: 40px;
+                    margin: 0;
+                    background-color: #fff;
+                    border-right: 1px solid #000000;
+                    border-bottom: 1px solid #000000;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+                .user_command_button:active {    /* ボタンが押されたとき 親要素*/
+                    background-color: #e53368;
+                    border-right: 0px;
+                    border-bottom: 0px;
+                    border-top: 1px solid #000000;
+                    border-left: 1px solid #000000;
+                }
+                .user_command_button button{     /* ボタンそのもののスタイル 子要素*/
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    /* buttonのスタイル削除 */
+                    background-color: transparent;
+                    border: none;
+                    cursor: pointer;
+                    outline: none;
+                    padding: 0;
+                    appearance: none;
+                }
+                .user_command_button form {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    margin: 0;
+                }
             </style>
+            <script src="https://code.jquery.com/jquery.min.js"></script>
+            <script>
+            $(function() {
+                $(".switch.sec1").hide(); // 予め隠しておく
+                $(".switch_button.sec1").click(function() { // クリックする領域のclassをいれる。←switch_buttonとsec1の2つを付けておく
+                    $(".switch.sec1").toggle(100);          // 展開・折り畳みされる領域のclassを入れる。←switchとsec1の2つを付けておく
+                    // 現在表示されている画像とそれを囲うdiv要素取得
+                    // const currentImgDivId = $(".switch_button.sec1 img:visible").attr("id"); 
+                    const currentImageId = $(".switch_button.sec1 img:visible").attr("id");
+                    
+                    // 次に表示する画像IDを決定
+                    let nextImageId;
+                    if (currentImageId === "img1") {
+                    nextImageId = "img2";
+                    } else if (currentImageId === "img2") {
+                    nextImageId = "img1";
+                    } else {
+                    // 最後の画像の場合は最初の画像に戻る
+                    nextImageId = "img1";
+                    }
+
+                    // 現在表示されている画像を非表示
+                    $(".switch_button.sec1 img:visible").hide();
+
+                    // 次に表示する画像を表示
+                    $("#" + nextImageId).show();
+                });
+
+            });
+            </script>
         </head>
         <body>
         <!-- ------------------------------ メイン-->
             <div class="all">
-                <h1>武器ルーレット<span style="font-size: 18px;"> （splatoon3専用）</span></h1>
+                <div class="h1">
+                    <a href="./index.php"><h1 style="margin-top:0;">武器ルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
+                </div>
+                <hr>
+                <div class="login">
+                    
+                    <?php
+                        if(isset($_SESSION['login_with'])){
+                            echo '<div style="display:flex; justify-content:space-between; margin:0 10px;" class="switch_button sec1">';
+
+                            // アイコンと文字をまとめるdiv
+                            echo        '<div style="display:flex;">';
+                            echo            '<div style="width:20px; height:20px; margin:2px 4px 2px 0; background-color:#2ea65a;"></div>'; // カラーアイコン
+                            echo            '<div><p style="margin:0;">'.$login_with.'でログイン中</p></div>'; // 文字
+                            echo        '</div>';
+                            // メニューボタンだけのdiv
+                            echo        '<div>';
+                            echo            '<img id="img1" src="./burger-icon.png" style="width:24px; height:24px;">';
+                            echo            '<img id="img2" src="./ku-icon.png"     style="width:24px; height:24px; display:none;">';
+                            echo        '</div>';
+                            echo '</div>';
+
+
+                            echo '<div style="margin:10px; display:none; display:flex; gap:0 6px;" class="switch sec1">';
+
+                            echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾛｸﾞｱｳﾄ</p>';
+                            echo            '<input type="hidden" name="user_command" value="logout">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+                            echo        '<div style="width:calc(40% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">プロフィール</p>';
+                            echo            '<input type="hidden" name="user_command" value="profile">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+                            echo        '<div style=width:calc(40% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';                            
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">お気に入りブキ</p>';
+                            echo            '<input type="hidden" name="user_command" value="favorite">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+                            echo '</div>';
+                        }else{
+                            echo '<div style="display:flex; justify-content:space-between; margin:0 10px;" class="switch_button sec1">';
+
+                            // アイコンと文字をまとめるdiv
+                            echo        '<div style="display:flex;">';
+                            echo            '<div style="width:20px; height:20px; margin:2px 4px 2px 0; background-color:#0a0a0a;"></div>'; // カラーアイコン
+                            echo            '<div><p style="margin:0;">ゲストユーザで利用中</p></div>';
+                            echo        '</div>';
+                            // メニューボタンだけのdiv
+                            echo        '<div>';
+                            echo            '<img id="img1" src="./burger-icon.png" style="width:24px; height:24px;">';
+                            echo            '<img id="img2" src="./ku-icon.png"     style="width:24px; height:24px; display:none;">';
+                            echo        '</div>';
+                            echo '</div>';
+
+
+                            echo '<div style="margin:10px; display:none; display:flex; gap:0 6px;" class="switch sec1">';
+                            echo        '<div style=width:calc(60% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';                            
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾛｸﾞｲﾝでできること</p>';
+                            echo            '<input type="hidden" name="user_command" value="wtenable">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+                            echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';                            
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾕｰｻﾞ登録</p>';
+                            echo            '<input type="hidden" name="user_command" value="signup">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+                            echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';                            
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾛｸﾞｲﾝ</p>';
+                            echo            '<input type="hidden" name="user_command" value="login">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+
+                            echo '</div>';
+                        }
+
+                    ?>
+                </div>
+                <hr>
                 <div class="result">
                     <div class="result-text">
                         <?php
@@ -652,17 +878,18 @@
                 <hr>
                 <?php for($i=0; $i<10; $i++){echo "<br>";} ?>
                 <p style="text-align:left;">
-                    - 制作期間：240609～240610<br>
-                    - 制作時間：21時間<br>
+                    <!-- - 制作期間：240609～240610<br> -->
+                    <!-- - 制作時間：21時間<br> -->
                     - 制作：k岡<br>
                     - 総アクセス数：<?php echo $a_count;?><br>
                     - 総抽選回数：<?php echo $r_count; ?><br>
                     - 更新ログ<br>
                     　240610_0844：メインシステム完成<br>
-                    　240610_0933：データ入力完了<br>
+                    　240610_0933：ブキデータ登録完了<br>
                     　240610_1000：絞り込み候補ランダム表示<br>
                     　240614_1558：誤字修正<br>
                     　240622_1924：射程絞り込み機能追加<br>
+                    　240724_0140：ログイン機能実装中<br>
                 </p>
                 <?php for($i=0; $i<10; $i++){echo "<br>";} ?>
             </div>
@@ -684,7 +911,10 @@
         fclose($acfile);
         // $_SESSION = array();
 
-
+        $session_0 = $_SESSION['login_with'][0];
+        $session_1 = $_SESSION['login_with'][1];
+        echo "<script>console.log('ログイン状況： $session_0');</script>";
+        echo "<script>console.log('ログイン状況： $session_1');</script>";
 
 
 
