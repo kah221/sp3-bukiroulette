@@ -46,6 +46,24 @@ function compareDBUserData($pdo, $input_name, $input_password){
         array_push($msg, '登録されたユーザ名であることを確認');
         // パスワード照合
         if($input_password == $target_user_password){ // パスワード一致
+            // 最終ログイン時刻を更新
+            $ip_address = $_SERVER['REMOTE_ADDR'];  // ipアドレス
+            date_default_timezone_set('Asia/Tokyo');
+            $dt = new DateTime();
+            $dt_strict = $dt -> format("Y-m-d H:i:s"); // usersのsignup_dateに格納するための厳密なdatetime型
+
+            // ログインIPアドレスを更新
+            $stmt = $pdo->prepare('UPDATE users SET login_ip_address = :ip_address WHERE user_id = :target_user_id');
+            $stmt->bindValue(':ip_address', $ip_address);
+            $stmt->bindValue(':target_user_id', $target_user_id);
+            $stmt->execute(); // SQLを実行
+
+            // ログイン時刻を更新
+            $stmt = $pdo->prepare('UPDATE users SET last_login = :dt_strict WHERE user_id = :target_user_id');
+            $stmt->bindValue(':dt_strict', $dt_strict);
+            $stmt->bindValue(':target_user_id', $target_user_id);
+            $stmt->execute(); // SQLを実行
+
             session_start();
             $_SESSION['login_with'] = [$target_user_id, $target_user_name];
             header("Location:../index.php");    // もうそのままindexへ飛ばしてしまう
@@ -53,11 +71,8 @@ function compareDBUserData($pdo, $input_name, $input_password){
         }else{ // パスワード不一致
             array_push($msg, 'パスワードが間違っています');
         }
-    }   
-    // foreach($msg as $e){
-    //     echo $e . '<br>';
-    // }
-    return $msg;
+    }
+    return $msg; // エラーメッセージを返す　ログインに失敗した時、ログイン画面のままでこれが表示される
 }
 
 

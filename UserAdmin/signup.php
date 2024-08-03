@@ -119,7 +119,6 @@ function compareDBUserData($pdo, $input_name, $input_password){
             }else{ // 違う時　おけ
                 array_push($msg, '本日1回目の登録でした');
                 // signupテーブルも更新しておく UPDATE
-                $stmt = $pdo->prepare('UPDATE users SET user_name = :new_name WHERE user_id = :user_id');
                 $stmt = $pdo->prepare('UPDATE signup SET signup_datetime = :datetime WHERE ip_address = :ip_address');
                 $stmt->bindValue(':datetime', $datetime);
                 $stmt->bindValue(':ip_address', $ip_address);
@@ -362,7 +361,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
                             <li>パスワードはあとから変更できません</li>
                             <li>パスワードリセット機能はないので、忘れないように気を付けてください</li>
                             <li>公序良俗に反する文字の利用を確認した場合はユーザを削除します</li>
-                            <li>新規登録は1日1回しか行えません！</li>
+                            <li>新規登録は連続で行えません</li>
                         </ul>
                     </div>
         

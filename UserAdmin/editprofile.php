@@ -143,10 +143,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
         echo "<script>console.log('input_hitokoto: $input_hitokoto');</script>";
 
         switch ($command) {                 // ここからボタン毎の処理分岐
-            case 'cancel':                 // 例えばinputタグのvalue=""の部分が trigger ならここが動作。
-                header("Location:./profile.php");
-                exit();                    
-                break;
+            // case 'cancel':                 // 例えばinputタグのvalue=""の部分が trigger ならここが動作。　ここ動いてない。
+            //     header("Location:./profile.php");
+            //     exit();                    
+            //     break;
             case 'save':  // 保存ボタンが押されたとき
                 $result_user_name = editDBUserName($_POST['input_name']);
                 editDBHitokoto($_POST['input_hitokoto']);
@@ -158,6 +158,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
             }
     }
     // POST変数の中身を削除するなどの操作は特別必要ない多分
+    // if (isset($_POST['cansel'])) {
+    //     echo 'cansel';
+    // }
+    // if (isset($_POST['save'])) {
+    //     echo 'save';
+    // }
+    
 }
 
 ?>
@@ -317,7 +324,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
             echo        '</div>';
 
             echo        '<div style="width:calc(40% - 6px);" class="user_command_button block act">';
-            echo            '<p style="text-align:center; margin:9px 0; font-size:16px; text-decoration:line-through;">プロフィール</p>';
+            echo            '<p style="text-align:center; margin:9px 0; font-size:16px; text-decoration:line-through;">ユーザ情報</p>';
             echo            '<button type="submit"></button>';
             echo        '</div>';
 
@@ -339,13 +346,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
             <div style="display:flex; justify-content:space-between; width:100%;">
                 <h2>プロフィール編集</h2>
                 <div style="display:flex;">
-                    <div class="user_command_button" style="margin:16.6px 5px 0 0; width:50px; height:35px;">
+                    <!-- <div class="user_command_button" style="margin:16.6px 5px 0 0; width:50px; height:35px;"> -->
                         <!-- <form action="editprofile.php" method="POST"> -->
-                            <p style="text-align:center; margin:5px; color:#000;">中止</p>
-                            <input type="hidden" name="user_command" value="cancel">
-                            <button type="submit"></button>
+                            <!-- <p style="text-align:center; margin:5px; color:#000;">中止</p> -->
+                            <!-- <input type="hidden" name="user_command" value="cancel"> -->
+                            <!-- <button type="submit"></button> -->
                         <!-- </form> -->
-                    </div>
+                    <!-- </div> -->
                     <div class="user_command_button" style="margin-top:16.6px; width:50px; height:35px;">
                         <!-- <form action="editprofile.php" method="POST"> -->
                             <p style="text-align:center; margin:5px; color:#000;">保存</p>
@@ -358,12 +365,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
             
             <table>
                 <tr>
-                    <td style="width:80px;">ユーザID</td>
+                    <td style="width:80px;"><strong>ユーザID</strong></td>
                     <td><?php echo $user_id; ?></td>
                 </tr>
                 <!-- input_nameとinput_hitokoto　というキー名で値を送信する -->
                 <tr>
-                    <td style="width:80px;">ユーザ名</td>
+                    <td style="width:80px;"><strong>ユーザ名</strong></td>
                     <td>
                         <input 
                         type="text" 
@@ -374,10 +381,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
                         pattern="^[a-zA-Z0-9ぁ-んァ-ヶー一-龠]*$"
                         >
                     </td>
-                    <td>(10文字以内)</td>
+                    <td style="font-size:15px;">(10文字以内)</td>
                 </tr>
                 <tr>
-                    <td style="width:80px;">ひとこと</td>
+                    <td style="width:80px;"><strong>ひとこと</strong></td>
                     <td>
                         <input 
                         type="text" 
@@ -388,14 +395,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
                         pattern="^[a-zA-Z0-9ぁ-んァ-ヶー一-龠]*$"
                         >
                     </td>
-                    <td>(20文字以内)</td>
+                    <td style="font-size:15px;">(20文字以内)</td>
                 </tr>
                 <tr>
-                    <td style="width:80px;">初ﾛｸﾞｲﾝ</td>
+                    <td style="width:80px;"><strong>初ﾛｸﾞｲﾝ</strong></td>
                     <td><?php echo $signup_date; ?></td>
                 </tr>
                 <tr>
-                    <td style="width:80px;">前回ﾛｸﾞｲﾝ</td>
+                    <td style="width:80px;"><strong>前回ﾛｸﾞｲﾝ</strong></td>
                     <td><?php echo $last_login; ?></td>
                 </tr>
             </table>

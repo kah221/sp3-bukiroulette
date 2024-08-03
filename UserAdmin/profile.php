@@ -51,6 +51,12 @@ echo "<script>console.log('hitokoto: $hitokoto');</script>";
 echo "<script>console.log('signup_date: $signup_date');</script>";
 echo "<script>console.log('last_login: $last_login');</script>";
 
+// ------------------------------その他ユーザ情報を取得する240802_0834
+$pdo->query('SET NAMES utf8;'); // 文字化け回避
+// usersテーブルから全てのカラム（ユーザid, ユーザ名, ｻｲﾝｱｯﾌﾟ日時, ラストログイン日時, 一言）を取得する
+$stmt = $pdo->prepare('SELECT user_name, hitokoto FROM users');
+$stmt->execute(); // SQL実行
+$other_user_data = $stmt->fetchAll();
 
 
 // ------------------------------------------------------------ログイン系処理
@@ -245,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
 
                             echo        '<div style="width:calc(40% - 6px);" class="user_command_button act">';
                             echo    '<form action="profile.php" method="POST">';
-                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">プロフィール</p>';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ユーザ情報</p>';
                             echo            '<input type="hidden" name="user_command" value="profile">';
                             echo            '<button type="submit"></button>';
                             echo    '</form>';
@@ -269,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
     <hr>
         <div style="width:380px; margin-left:10px;">
             <div style="display:flex; justify-content:space-between; width:100%;">
-                <h2>プロフィール</h2>
+                <h2>あなたのプロフィール</h2>
                 <div class="user_command_button" style="margin-top:16.6px; width:50px; height:35px;">
                     <form action="editprofile.php" method="POST">
                         <p style="text-align:center; margin:5px;">編集</p>
@@ -281,26 +287,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
 
             <table>
                 <tr>
-                    <td style="width:80px;">ユーザID</td>
+                    <td style="width:80px;"><strong>ユーザID</strong></td>
                     <td><?php echo $user_id; ?></td>
                 </tr>
                 <tr>
-                    <td style="width:80px;">ユーザ名</td>
+                    <td style="width:80px;"><strong>ユーザ名</strong></td>
                     <td><?php echo $user_name; ?></td>
                 </tr>
                 <tr>
-                    <td style="width:80px;">ひとこと</td>
+                    <td style="width:80px;"><strong>ひとこと</strong></td>
                     <td><?php echo $hitokoto; ?></td>
                 </tr>
                 <tr>
-                    <td style="width:80px;">初ﾛｸﾞｲﾝ</td>
+                    <td style="width:80px;"><strong>初ﾛｸﾞｲﾝ</strong></td>
                     <td><?php echo $signup_date; ?></td>
                 </tr>
                 <tr>
-                    <td style="width:80px;">前回ﾛｸﾞｲﾝ</td>
+                    <td style="width:80px;"><strong>前回ﾛｸﾞｲﾝ</strong></td>
                     <td><?php echo $last_login; ?></td>
                 </tr>
             </table>
+
+            <hr>
+            <div style="display:flex; justify-content:space-between; width:100%;">
+                <h2>登録済みユーザ一覧</h2>
+            </div>
+
+                <table style="width:100%;">
+                    <tr style="">
+                        <td style="border: 1px solid black; width:180px; text-align:center; padding:5px 0;"><strong>ユーザ名</strong></td>
+                        <td style="border: 1px solid black; text-align:center; padding:5px 0;"><strong>ひとこと</strong></td>
+                    </tr>
+                <?php
+                    for($i=0; $i<count($other_user_data); $i++){
+                        echo '<tr>';
+                        echo    '<td style="text-align:center; padding:3px 0; border-bottom: 1px dashed black;">'.$other_user_data[$i][0].'</td>';
+                        echo    '<td style="padding:3px 0; border-bottom: 1px dashed black;"><span style="font-size:12px;">'.$other_user_data[$i][1].'</span></td>';
+                        echo '</tr>';
+                    }
+                ?>
+                </table>            
         </div>
     </div>
 </body>

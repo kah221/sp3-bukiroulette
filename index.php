@@ -69,6 +69,32 @@
     $r_count = fgets($rcfile);
     fclose($rcfile);
     
+    // ------------------------------DBのお気に入りデータを取得（ログイン中のみ）
+    if(isset($_SESSION['login_with'])){
+        $user_id = $_SESSION['login_with'][0]; // ログインユーザのID
+        $pdo = new PDO('mysql:dbname=floor02_sp3-bk-roulette;host=mysql652.db.sakura.ne.jp;', 'floor02', getenv('DB_PASSWORD')); // DB接続
+        $pdo->query('SET NAMES utf8;'); // 文字化け回避
+        $stmt = $pdo->prepare('SELECT buki_id FROM favorite WHERE user_id = :user_id'); // favoriteテーブルからユーザのデータを取得
+        $stmt->bindParam(':user_id', $user_id); // プレースホルダにバインド（セキュリティ上必要）
+        $stmt->execute(); // SQL実行
+        $fav_id_all = $stmt->fetchAll();
+        // 重複するデータを消す
+        $fav_id = [];
+        for($i=0;$i<count($fav_id_all);$i++){
+            foreach($fav_id_all[$i] as $key => $value){
+                if(gettype($key) == 'string'){
+                    array_push($fav_id, $value);
+                }
+            }
+        }
+        // var_dump($fav_id);
+
+        // お気に入り機能のラジオボタンのチェック　デフォルトの設定
+        if(!isset($_POST['fav'])){
+            $_POST['fav'] = 'lv1';
+        }
+    
+    }
 
     if(isset($_POST['command'])) {
         // echo '絞り込み条件を保持する';
@@ -127,7 +153,57 @@
                 array_push($ids, $bukis[$i]);
             }
         }
+
+        // ------------------------------ログイン中なら、さらにお気に入り機能による絞り込みも行う
+        if(isset($_SESSION['login_with'])){
+            global $fav_id;
+            $ids = doSortFav($ids, $fav_id, $_POST['fav']);
+        }
+
+
+
+
+
         return $ids;
+    }
+
+    
+    //240802_0655 お気に入りブキを考慮する場合の2回目のソート（doSortの中から条件付きで呼び出し）
+    function doSortFav($bukis_sorted, $fav_id, $lv){
+        $result = [];
+        switch($lv){
+            case 'lv3':
+                for($i=0; $i<count($bukis_sorted); $i++){ // 既に絞り込まれているブキの数だけ回す
+                    // echo $bukis_sorted[$i][6].'<br>';
+                    if(in_array($bukis_sorted[$i][6], $fav_id)){ // ↑の武器IDが、お気に入りブキIDと一致したした時
+                        array_push($result, $bukis_sorted[$i]); // その武器データを新たな空の配列に入れていく
+                    }
+                }
+                break;            
+            case 'lv2':
+                $result = $bukis_sorted; // コピーする
+                for($i=0; $i<count($bukis_sorted); $i++){
+                    // echo $bukis_sorted[$i][6].'<br>';
+                    if(in_array($bukis_sorted[$i][6], $fav_id)){ // 武器IDが、お気に入りブキIDと位置した時
+                        array_push($result, $bukis_sorted[$i]); // その武器データをコピーした配列に追加（お気に入りブキだけ2倍存在することになる）
+                    }
+                }
+                break;
+            case 'lv1':
+                $result = $bukis_sorted;
+                break;
+            case 'lv0':
+                for($i=0; $i<count($bukis_sorted); $i++){
+                    // echo $bukis_sorted[$i][6].'<br>';
+                    if(!in_array($bukis_sorted[$i][6], $fav_id)){ // ↑の武器IDが、お気に入りブキIDと異なっているとき追加（lv3と逆）
+                        array_push($result, $bukis_sorted[$i]);
+                    }
+                }
+                break;
+                    
+        }
+        // var_dump($result);
+        return $result;
     }
 
     // commandキーに値（trigger, allnothingなど）が書き込まれたとき（制御用ボタンが押されたとき）
@@ -142,6 +218,8 @@
                     if(count($bukis_sorted) == 0){
                         $result_none = '条件に合うブキがありません';
                     }else{
+
+
                         // 抽選部分
                         $pointer = random_int(0, count($bukis_sorted)-1);
                         // 結果表示用変数
@@ -250,7 +328,9 @@
                     exit();
                     break;
                 case 'wtenable';
-                    break;
+                    header("Location:./side.php");
+                    exit();
+                break;
             }
         }
         // POST変数の中身を削除するなどの操作は特別必要ない多分
@@ -450,7 +530,7 @@
 
                             echo        '<div style="width:calc(40% - 6px);" class="user_command_button">';
                             echo    '<form action="index.php" method="POST">';
-                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">プロフィール</p>';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ユーザ情報</p>';
                             echo            '<input type="hidden" name="user_command" value="profile">';
                             echo            '<button type="submit"></button>';
                             echo    '</form>';
@@ -484,9 +564,9 @@
                             echo '<div style="margin:10px; display:none; display:flex; gap:0 6px;" class="switch sec1">';
                             echo        '<div style=width:calc(60% - 6px);" class="user_command_button">';
                             echo    '<form action="index.php" method="POST">';                            
-                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾛｸﾞｲﾝでできること</p>';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾛｸﾞｲﾝで使える機能について</p>';
                             echo            '<input type="hidden" name="user_command" value="wtenable">';
-                            echo            '<button type="submit"></button>';
+                            echo            '<button type="submit" id="open-popup"></button>'; // ポップアップを開くためのid=を付ける
                             echo    '</form>';
                             echo        '</div>';
 
@@ -550,17 +630,81 @@
                             if(count($bukis_sorted) > 0){
                                 echo '<p style="margin: 0; font-size: 13px;">最大10件まで表示</p>';
                                 shuffle($bukis_sorted);
-                                for($i=0; $i<10; $i++){
-                                    if($i < count($bukis_sorted)){
-                                        echo '<p style="text-align: center; margin: 0;">'.$bukis_sorted[$i][0].'</p>';
+                                // ﾛｸﾞｲﾝしていればお気に入り武器に★マークを付ける
+                                if(isset($_SESSION['login_with'])){ // ﾛｸﾞｲﾝしているとき
+                                    for($i=0; $i<10; $i++){
+                                        if($i < count($bukis_sorted)){
+                                            echo '<p style="text-align: center; margin: 0;">';
+                                            if(in_array($bukis_sorted[$i][6], $fav_id)){
+                                                echo '★';
+                                            }
+                                            echo $bukis_sorted[$i][0].'</p>';
+                                        }
+                                    }
+                                }else{ // ログインしていないとき
+                                    for($i=0; $i<10; $i++){
+                                        if($i < count($bukis_sorted)){
+                                            echo '<p style="text-align: center; margin: 0;">'.$bukis_sorted[$i][0].'</p>';
+                                        }
                                     }
                                 }
                                 if(count($bukis_sorted) > 10){
                                     echo '<p style="text-align: center; margin: 0;">...</p>';
                                 }    
+
                             }
                         ?>
                     </div>
+
+                    <!-- ログインしているときだけ表示されるお気に入りブキ絞り込み部分 -->
+                    <?php
+                    if($_SESSION['login_with'][0] != ''){
+                        echo '<hr>';
+                        echo '<div class="fab">';
+                        echo '<h2>お気に入り機能</h2>';
+
+                        echo '<input type="radio" id="fav3" name="fav" value="lv3"';
+                            if(isset($_POST['fav']) and $_POST['fav'] == 'lv3'){
+                                echo 'checked=""';
+                            }
+                        echo '><label for="fav3"><strong>Lv.3</strong>　お気に入りブキの出現率: 100%</label><br>';
+
+                        echo '<input type="radio" id="fav2" name="fav" value="lv2"';
+                        if(isset($_POST['fav']) and $_POST['fav'] == 'lv2'){
+                            echo 'checked=""';
+                        }
+                        echo '><label for="fav2"><strong>Lv.2</strong>　お気に入りブキの出現率: 2倍</label><br>';
+
+                        echo '<input type="radio" id="fav1" name="fav" value="lv1"';
+                        if(isset($_POST['fav']) and $_POST['fav'] == 'lv1'){
+                            echo 'checked=""';
+                        }
+                        echo '><label for="fav1"><strong>Lv.1</strong>　お気に入りブキの出現率: 1倍(default)</label><br>';
+
+                        echo '<input type="radio" id="fav0" name="fav" value="lv0"';
+                        if(isset($_POST['fav']) and $_POST['fav'] == 'lv0'){
+                            echo 'checked=""';
+                        }
+                        echo '><label for="fav0"><strong>Lv.0</strong>　お気に入りブキの出現率: 0%</label>';
+
+                        echo '</div>';
+                    }
+                    
+                    
+                        
+                        
+                        
+                        
+                    
+                    ?>
+
+                    
+                    
+                    
+                    
+                    
+
+
                     <hr>
                     <div class="type">
                         <h2>ブキ種
@@ -870,8 +1014,6 @@
                 
                 </form>
 
-            
-
 
 
         <!-- ------------------------------ -->
@@ -880,7 +1022,8 @@
                 <p style="text-align:left;">
                     <!-- - 制作期間：240609～240610<br> -->
                     <!-- - 制作時間：21時間<br> -->
-                    - 制作：k岡<br>
+                    - 制作：kah7221<br>
+                    - コード：<a href="https://github.com/kah221/sp3bukiroulette">github</a><br>
                     - 総アクセス数：<?php echo $a_count;?><br>
                     - 総抽選回数：<?php echo $r_count; ?><br>
                     - 更新ログ<br>
@@ -888,8 +1031,11 @@
                     　240610_0933：ブキデータ登録完了<br>
                     　240610_1000：絞り込み候補ランダム表示<br>
                     　240614_1558：誤字修正<br>
-                    　240622_1924：射程絞り込み機能追加<br>
-                    　240724_0140：ログイン機能実装中<br>
+                    　240622_1924：射程, 確定数絞り込み機能追加<br>
+                    　240802_0351：ログイン・お気に入りブキ機能追加<br>
+                    　240802_0823：お気に入りブキ絞り込み機能追加<br>
+                    　240802_0902：登録済みユーザ一覧の追加<br>
+                    　240804_0604：ログイン機能説明ページの追加<br>
                 </p>
                 <?php for($i=0; $i<10; $i++){echo "<br>";} ?>
             </div>

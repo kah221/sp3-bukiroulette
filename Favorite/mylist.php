@@ -116,7 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
                 header("Location:./mylist.php");
                 exit();                        
                 break;
-
+            case 'edit_mylist':
+                header("Location:./editmylist.php");
+                exit();                        
+                break;
+    
         }
     }
     // POST変数の中身を削除するなどの操作は特別必要ない多分
@@ -284,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
 
                             echo        '<div style="width:calc(40% - 6px);" class="user_command_button">';
                             echo    '<form action="mylist.php" method="POST">';
-                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">プロフィール</p>';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ユーザ情報</p>';
                             echo            '<input type="hidden" name="user_command" value="profile">';
                             echo            '<button type="submit"></button>';
                             echo    '</form>';
@@ -306,10 +310,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
     </div>
 
     <hr>
-        <h2>お気に入りブキ一覧</h2>
+
+    <div style="width:380px; margin-left:10px;">
+        <div style="display:flex; justify-content:space-between; width:100%;">
+            <h2>お気に入りブキ一覧</h2>
+            <div class="user_command_button" style="margin-top:16.6px; width:50px; height:35px;">
+                <form action="mylist.php" method="POST">
+                    <p style="text-align:center; margin:5px;">編集</p>
+                    <input type="hidden" name="user_command" value="edit_mylist">
+                    <button type="submit"></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
         <?php
             for($i=0; $i<count($favorites); $i++){
-                echo '<p style="text-align: center; margin: 0;">'. $favorites[$i][0] .'</p>';
+                // echo '<p style="text-align: center; margin: 0;">'. $favorites[$i][0] .'</p>';
+                echo '<p style="margin-left:10px;"><strong>'.$favorites[$i][0].'</strong><span style="font-size:13px">　'.$favorites[$i][1].'</span></p>';
             }
         ?>
     </div>
