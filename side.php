@@ -145,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
 
     <div class="all">
         <div class="h1">
-            <a href="./index.php"><h1 style="margin-top:0;">武器ルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
+            <a href="./index.php"><h1 style="margin-top:0;">ブキルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
         </div>
         <hr>
         <div class="">
@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
             <ul>
                 <li style="font-size:18px;"><strong>ユーザ名・ひとことの編集</strong></li>
                 <p>
-                    ユーザ名（表示名） と ひとこと（ステータスメッセージ）を編集できるようになります。　<br>
+                    ユーザ名前（表示名） と ひとこと（ステータスメッセージ）を編集できるようになります。　<br>
                     他のユーザの情報も一覧で表示されます
                 </p>
             </ul>

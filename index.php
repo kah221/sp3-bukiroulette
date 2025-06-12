@@ -1,10 +1,11 @@
 <?php
     // 240609_0313～240610_1002
+    // 250612_1744
     date_default_timezone_set('Asia/Tokyo');
     $dt = new DateTime('now');
     $now = $dt -> format("ymdHi");
-    $dt_str = $dt -> format("Y年m月d日 H時i分s秒");
-    
+    $dt_str = $dt -> format("Y-m-d H:i:s");
+
     // ------------------------------------------------------------
     // アクセスカウンタファイルを開く
     $acfile = fopen('a-count.dat', 'r+b');
@@ -49,12 +50,20 @@
     echo "<script>console.log('login_with: $login_with');</script>";
     
 
+    // ------------------------------------------------------------DBに接続するだけの関数
+    function connectDB(){
+        $pdo = new PDO('mysql:dbname=floor02_sp3-bk-roulette;host=mysql652.db.sakura.ne.jp;', 'floor02', getenv('DB_PASSWORD')); // DB接続
+        $pdo->query('SET NAMES utf8;'); // 文字化け回避
+        return $pdo;
+    }
+
+
 
 
 
     // ------------------------------------------------------------初回ｱｸｾｽ
     // ------------------------------武器データ取得
-    $csv_file = fopen("buki-data.csv", "r");
+    $csv_file = fopen("buki-data-new.csv", "r");
     $buki_data_all = [];
     $row_count = -1;
     while($buki_data_all_line = fgetcsv($csv_file)){ // 行にデータがある限り繰り返す？
@@ -64,16 +73,15 @@
     fclose($csv_file);
 
     // 総抽選回数取得
-    $rcfile = fopen('r-count.dat', 'r+b');
-    flock($rcfile, LOCK_EX);
-    $r_count = fgets($rcfile);
-    fclose($rcfile);
-    
+    // $rcfile = fopen('r-count.dat', 'r+b');
+    // flock($rcfile, LOCK_EX);
+    // $r_count = fgets($rcfile);
+    // fclose($rcfile);
+
     // ------------------------------DBのお気に入りデータを取得（ログイン中のみ）
     if(isset($_SESSION['login_with'])){
         $user_id = $_SESSION['login_with'][0]; // ログインユーザのID
-        $pdo = new PDO('mysql:dbname=floor02_sp3-bk-roulette;host=mysql652.db.sakura.ne.jp;', 'floor02', getenv('DB_PASSWORD')); // DB接続
-        $pdo->query('SET NAMES utf8;'); // 文字化け回避
+        $pdo = connectDB();
         $stmt = $pdo->prepare('SELECT buki_id FROM favorite WHERE user_id = :user_id'); // favoriteテーブルからユーザのデータを取得
         $stmt->bindParam(':user_id', $user_id); // プレースホルダにバインド（セキュリティ上必要）
         $stmt->execute(); // SQL実行
@@ -93,7 +101,11 @@
         if(!isset($_POST['fav'])){
             $_POST['fav'] = 'lv1';
         }
-    
+    }
+
+    // 新武器のチェックボックスのチェック　デフォルトの設定 250612
+    if(!isset($_POST['new'])){
+        $_POST['new'] = 'lv1';
     }
 
     if(isset($_POST['command'])) {
@@ -149,7 +161,7 @@
                 }
             }
             // array_push($flags, $flag); // array_push(何処に, 何を);
-            if($flag == 5){
+            if($flag == 5){ // 全ての条件に合致した時追加
                 array_push($ids, $bukis[$i]);
             }
         }
@@ -160,14 +172,15 @@
             $ids = doSortFav($ids, $fav_id, $_POST['fav']);
         }
 
-
-
-
+        // 250612_追加分 新武器による絞り込みも行う(ログインに無関係だが、$_POST['new']が存在しその値が'lv1'ではなかった時）
+        if(isset($_POST['new']) and $_POST['new'] != 'lv1'){
+            $ids = doSortNew($ids, $_POST['new']);  // 第2引数の中は lv0, lv2, lv3 のいずれか
+        }
 
         return $ids;
     }
 
-    
+
     //240802_0655 お気に入りブキを考慮する場合の2回目のソート（doSortの中から条件付きで呼び出し）
     function doSortFav($bukis_sorted, $fav_id, $lv){
         $result = [];
@@ -179,7 +192,7 @@
                         array_push($result, $bukis_sorted[$i]); // その武器データを新たな空の配列に入れていく
                     }
                 }
-                break;            
+                break;
             case 'lv2':
                 $result = $bukis_sorted; // コピーする
                 for($i=0; $i<count($bukis_sorted); $i++){
@@ -200,19 +213,72 @@
                     }
                 }
                 break;
-                    
+
         }
         // var_dump($result);
         return $result;
     }
 
+    // 250612_追加分 新武器を考慮する場合の2回目のソート（doSortの中から条件付きで呼び出し）
+    function doSortNew($bukis_sorted, $lv){
+        $result = [];
+        switch($lv){
+            case 'lv3':
+                for($i=0; $i<count($bukis_sorted); $i++){ // 既に絞り込まれているブキの数だけ回す
+                    // echo $bukis_sorted[$i][6].'<br>';
+                    if($bukis_sorted[$i][6] >= 130){ // 武器IDが、130以上であれば、今回追加された新ブキである
+                        array_push($result, $bukis_sorted[$i]); // その武器データを新たな空の配列に入れていく
+                    }
+                }
+                break;
+            case 'lv2':
+                $result = $bukis_sorted; // コピーする
+                for($i=0; $i<count($bukis_sorted); $i++){
+                    // echo $bukis_sorted[$i][6].'<br>';
+                    if($bukis_sorted[$i][6] >= 130){ // 武器IDが、130以上であれば、今回追加された新ブキである
+                        array_push($result, $bukis_sorted[$i]); // その武器データをコピーした配列に追加（新ブキだけ2倍存在することになる）
+                    }
+                }
+                break;
+            // lv1の時はこの関数は呼ばれない
+            case 'lv0':
+                for($i=0; $i<count($bukis_sorted); $i++){
+                    // echo $bukis_sorted[$i][6].'<br>';
+                    if($bukis_sorted[$i][6] < 130){ // 武器IDが、130未満であれば過去のブキであるからこれを追加（lv3と逆）
+                        array_push($result, $bukis_sorted[$i]);
+                    }
+                }
+                break;
+        }
+        return $result;
+    }
+
+
+
     // commandキーに値（trigger, allnothingなど）が書き込まれたとき（制御用ボタンが押されたとき）
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (isset($_POST['command'])) {
             $command = $_POST['command'];
-    
+
             switch ($command) {
                 case 'trigger':
+                    // r-time.datファイルに回した時刻を記録 240812_2309
+                    // ファイルを開く（追記モード）
+                    $file = fopen('r-time.csv', 'a');
+
+                    // 新しい行を追加する
+                    fputcsv($file, [$dt_str]);
+
+                    // ファイルを閉じる
+                    fclose($file);
+
+                    // 先頭の1行を消す
+                    $lines = file('r-time.csv'); // ファイル全体を読み込み　配列に
+                    array_shift($lines); // 最初の要素を削除
+                    file_put_contents('r-time.csv', implode("", $lines));
+
+
+
                     // 絞り込み実施
                     $bukis_sorted = doSort($buki_data_all, $_POST['type'], $_POST['sub'], $_POST['spe'], $_POST['hit'], $_POST['range']);
                     if(count($bukis_sorted) == 0){
@@ -235,6 +301,34 @@
                         rewind($rcfile);
                         fwrite($rcfile, $r_count);
                         fclose($rcfile);
+                        //240809_2327
+                        // if(isset($_SESSION['login_with'])){
+                            $pdo = connectDB();
+                            // DBから出現した武器のcountを取得しプラス1する
+                            $stmt = $pdo->prepare('SELECT count FROM result WHERE buki_id = :buki_id');
+                            $stmt->bindValue(':buki_id', $pointer);
+                            $stmt->execute();
+                            if (!$stmt->execute()) {
+                                echo '読み取り失敗<br>';
+                            }
+                            $result = $stmt->fetch(PDO::FETCH_ASSOC); // カッコ内は、連想配列で取得するという設定　なぜかこれが無いと、上手くcountが取得でいない
+                            $count = $result['count'];
+
+                            $count ++;
+
+                            // // DB更新
+                            $stmt = $pdo->prepare('UPDATE result SET count = :count WHERE buki_id = :buki_id');
+                            $stmt->bindParam(':buki_id', $pointer);
+                            $stmt->bindParam(':count', $count);
+                            $stmt->execute();
+                            if (!$stmt->execute()) {
+                                echo '更新失敗<br>';
+                            }
+                        // }
+
+
+
+
                     }
                     break;
                 case 'allselect':
@@ -309,15 +403,19 @@
             switch ($command) {                 // ここからボタン毎の処理分岐
                 case 'logout':                 // 例えばinputタグのvalue=""の部分が trigger ならここが動作。
                     header("Location:./UserAdmin/logout.php");
-                    exit();                    
+                    exit();
+                    break;
+                case 'stats':
+                    header("Location:./stats.php");
+                    exit();
                     break;
                 case 'profile':
                     header("Location:./UserAdmin/profile.php");
-                    exit();                    
+                    exit();
                     break;
                 case 'favorite':
                     header("Location:./Favorite/mylist.php");
-                    exit();                        
+                    exit();
                     break;
                 case 'signup';
                     header("Location:./UserAdmin/signup.php");
@@ -390,7 +488,7 @@
                     cursor: pointer;
                     outline: none;
                     padding: 0;
-                    appearance: none;   
+                    appearance: none;
                 }
                 .mawasu-button-area:active{
                     background-color: #dbdbdb;
@@ -470,7 +568,7 @@
                     // 現在表示されている画像とそれを囲うdiv要素取得
                     // const currentImgDivId = $(".switch_button.sec1 img:visible").attr("id"); 
                     const currentImageId = $(".switch_button.sec1 img:visible").attr("id");
-                    
+
                     // 次に表示する画像IDを決定
                     let nextImageId;
                     if (currentImageId === "img1") {
@@ -496,11 +594,11 @@
         <!-- ------------------------------ メイン-->
             <div class="all">
                 <div class="h1">
-                    <a href="./index.php"><h1 style="margin-top:0;">武器ルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
+                    <a href="./index.php"><h1 style="margin-top:0;">ブキルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
                 </div>
                 <hr>
                 <div class="login">
-                    
+
                     <?php
                         if(isset($_SESSION['login_with'])){
                             echo '<div style="display:flex; justify-content:space-between; margin:0 10px;" class="switch_button sec1">';
@@ -528,16 +626,24 @@
                             echo    '</form>';
                             echo        '</div>';
 
-                            echo        '<div style="width:calc(40% - 6px);" class="user_command_button">';
+                            echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
                             echo    '<form action="index.php" method="POST">';
-                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ユーザ情報</p>';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">統計</p>';
+                            echo            '<input type="hidden" name="user_command" value="stats">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+                            echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ユーザ</p>';
                             echo            '<input type="hidden" name="user_command" value="profile">';
                             echo            '<button type="submit"></button>';
                             echo    '</form>';
                             echo        '</div>';
 
                             echo        '<div style=width:calc(40% - 6px);" class="user_command_button">';
-                            echo    '<form action="index.php" method="POST">';                            
+                            echo    '<form action="index.php" method="POST">';
                             echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">お気に入りブキ</p>';
                             echo            '<input type="hidden" name="user_command" value="favorite">';
                             echo            '<button type="submit"></button>';
@@ -562,16 +668,24 @@
 
 
                             echo '<div style="margin:10px; display:none; display:flex; gap:0 6px;" class="switch sec1">';
-                            echo        '<div style=width:calc(60% - 6px);" class="user_command_button">';
-                            echo    '<form action="index.php" method="POST">';                            
-                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾛｸﾞｲﾝで使える機能について</p>';
+                            echo        '<div style=width:calc(40% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾛｸﾞｲﾝ機能説明</p>';
                             echo            '<input type="hidden" name="user_command" value="wtenable">';
                             echo            '<button type="submit" id="open-popup"></button>'; // ポップアップを開くためのid=を付ける
                             echo    '</form>';
                             echo        '</div>';
 
                             echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
-                            echo    '<form action="index.php" method="POST">';                            
+                            echo    '<form action="index.php" method="POST">';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">統計</p>';
+                            echo            '<input type="hidden" name="user_command" value="stats">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+                            echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
+                            echo    '<form action="index.php" method="POST">';
                             echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾕｰｻﾞ登録</p>';
                             echo            '<input type="hidden" name="user_command" value="signup">';
                             echo            '<button type="submit"></button>';
@@ -579,7 +693,7 @@
                             echo        '</div>';
 
                             echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
-                            echo    '<form action="index.php" method="POST">';                            
+                            echo    '<form action="index.php" method="POST">';
                             echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ﾛｸﾞｲﾝ</p>';
                             echo            '<input type="hidden" name="user_command" value="login">';
                             echo            '<button type="submit"></button>';
@@ -689,21 +803,36 @@
 
                         echo '</div>';
                     }
-                    
-                    
-                        
-                        
-                        
-                        
-                    
                     ?>
 
-                    
-                    
-                    
-                    
-                    
-
+                    <!-- ↓ 250612 追加分 -->
+                    <hr>
+                    <div class="new">
+                        <h2>新ブキ<span style="font-size:80%;"> （Ver.10.0.0 で追加）</span></h2>
+                        <div>
+                            <input type="radio" id="new3" name="new" value="lv3"
+                                <?php
+                                    if(isset($_POST['new']) and $_POST['new'] == 'lv3'){echo 'checked=""';}
+                                ?>
+                                ><label for="new3"><strong>Lv.3</strong>　新ブキの出現率: 100%</label><br>
+                            <input type="radio" id="new2" name="new" value="lv2"
+                                <?php
+                                    if(isset($_POST['new']) and $_POST['new'] == 'lv2'){echo 'checked=""';}
+                                ?>
+                                ><label for="new2"><strong>Lv.2</strong>　新ブキの出現率: 2倍</label><br>
+                            <input type="radio" id="new1" name="new" value="lv1"
+                                <?php
+                                    if(isset($_POST['new']) and $_POST['new'] == 'lv1'){echo 'checked=""';}
+                                ?>
+                                ><label for="new1"><strong>Lv.1</strong>　新ブキの出現率: 1倍(default)</label><br>
+                            <input type="radio" id="new0" name="new" value="lv0"
+                                <?php
+                                    if(isset($_POST['new']) and $_POST['new'] == 'lv0'){echo 'checked=""';}
+                                ?>
+                                ><label for="new0"><strong>Lv.0</strong>　新ブキの出現率: 0%</label><br>
+                        </div>
+                    </div>
+                    <!-- ↑ 250612 追加分 -->
 
                     <hr>
                     <div class="type">
@@ -1011,7 +1140,6 @@
                                 ><label for="h5">５確</label><br>
                         </div>
                     </div>
-                
                 </form>
 
 
@@ -1022,10 +1150,14 @@
                 <p style="text-align:left;">
                     <!-- - 制作期間：240609～240610<br> -->
                     <!-- - 制作時間：21時間<br> -->
-                    - 制作：kah7221<br>
-                    - コード：<a href="https://github.com/kah221/sp3bukiroulette">github</a><br>
-                    - 総アクセス数：<?php echo $a_count;?><br>
-                    - 総抽選回数：<?php echo $r_count; ?><br>
+                    このページは趣味で作成したものです．<br>
+                    スプラトゥーン3のブキをランダムに抽選します．<br>
+                    ログインすれば，さらにお気に入りブキの登録・絞り込みが出来ます．<br>
+                    <br>
+                    - 制作：kah221<br>
+                    - 不具合等の報告：<a href="http://discordapp.com/users/473663926538600448" target="_blank">discord</a><br>
+                    - コード：<a href="https://github.com/kah221/sp3bukiroulette" target="_blank">github</a><br>
+                    - アクセス数(簡易)：<?php echo $a_count;?><br>
                     - 更新ログ<br>
                     　240610_0844：メインシステム完成<br>
                     　240610_0933：ブキデータ登録完了<br>
@@ -1036,6 +1168,9 @@
                     　240802_0823：お気に入りブキ絞り込み機能追加<br>
                     　240802_0902：登録済みユーザ一覧の追加<br>
                     　240804_0604：ログイン機能説明ページの追加<br>
+                    　240809_0709：統計機能追加<br>
+                    　240813_0028：1画面グラフページの追加<br>
+                    　250612_1938：新ブキ追加（Ver.10.0.0）<br>
                 </p>
                 <?php for($i=0; $i<10; $i++){echo "<br>";} ?>
             </div>

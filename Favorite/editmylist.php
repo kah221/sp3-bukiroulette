@@ -77,7 +77,7 @@ function updateDB($pdo, $user_id, $checked_id){
         }
         header("Location:./mylist.php");
         exit();
-    }catch(e){
+    }catch(Exception $e){
         array_push($msg, 'お気に入りブキの登録に失敗しました');
     }    
     return $msg;
@@ -271,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
 <body bgcolor=#dfdfdf>
     <div class="all">
     <div class="h1">
-        <a href="../index.php"><h1 style="margin-top:0;">武器ルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
+        <a href="../index.php"><h1 style="margin-top:0;">ブキルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
     </div>
     <hr>
     <div class="login">                
@@ -302,9 +302,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
                             echo    '</form>';
                             echo        '</div>';
 
-                            echo        '<div style="width:calc(40% - 6px);" class="user_command_button">';
+                            echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
                             echo    '<form action="mylist.php" method="POST">';
-                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ユーザ情報</p>';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">統計</p>';
+                            echo            '<input type="hidden" name="user_command" value="stats">';
+                            echo            '<button type="submit"></button>';
+                            echo    '</form>';
+                            echo        '</div>';
+
+                            echo        '<div style="width:calc(20% - 6px);" class="user_command_button">';
+                            echo    '<form action="mylist.php" method="POST">';
+                            echo            '<p style="text-align:center; margin:9px 0; font-size:16px;">ユーザ</p>';
                             echo            '<input type="hidden" name="user_command" value="profile">';
                             echo            '<button type="submit"></button>';
                             echo    '</form>';

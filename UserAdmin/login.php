@@ -71,8 +71,11 @@ function compareDBUserData($pdo, $input_name, $input_password){
         }else{ // パスワード不一致
             array_push($msg, 'パスワードが間違っています');
         }
-    }
-    return $msg; // エラーメッセージを返す　ログインに失敗した時、ログイン画面のままでこれが表示される
+    }   
+    // foreach($msg as $e){
+    //     echo $e . '<br>';
+    // }
+    return $msg;
 }
 
 
@@ -218,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
 
     <div class="all">
     <div class="h1">
-        <a href="../index.php"><h1 style="margin-top:0;">武器ルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
+        <a href="../index.php"><h1 style="margin-top:0;">ブキルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1></a>
     </div>
     <hr>
     <div class="login">                

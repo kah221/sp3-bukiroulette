@@ -295,10 +295,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
 <body bgcolor=#dfdfdf>
     <div class="all">
     <div class="h1">
-        <h1 style="margin-top:0;">武器ルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1>
+        <h1 style="margin-top:0;">ブキルーレット<span style="font-size: 18px;">（splatoon3専用）</span></h1>
     </div>
     <hr>
-    <div class="login">                
+    <div class="login">
     <?php
         if(isset($_SESSION['login_with'])){
             echo '<div style="display:flex; justify-content:space-between; margin:0 10px; height:24px;" class="switch_button sec1">';
@@ -323,8 +323,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') { // ポスト通信があったかを
             echo            '<button type="submit"></button>';
             echo        '</div>';
 
-            echo        '<div style="width:calc(40% - 6px);" class="user_command_button block act">';
-            echo            '<p style="text-align:center; margin:9px 0; font-size:16px; text-decoration:line-through;">ユーザ情報</p>';
+            echo        '<div style="width:calc(20% - 6px);" class="user_command_button block">';
+            echo            '<p style="text-align:center; margin:9px 0; font-size:16px; text-decoration:line-through;">統計</p>';
+            echo            '<button type="submit"></button>';
+            echo        '</div>';
+
+            echo        '<div style="width:calc(20% - 6px);" class="user_command_button block act">';
+            echo            '<p style="text-align:center; margin:9px 0; font-size:16px; text-decoration:line-through;">ユーザ</p>';
             echo            '<button type="submit"></button>';
             echo        '</div>';
 
