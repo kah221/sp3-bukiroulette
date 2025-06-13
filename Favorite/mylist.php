@@ -50,7 +50,7 @@ $db_favorites = $stmt->fetchAll();
 
 
 // ------------------------------④武器データ取得
-$csv_file = fopen("../buki-data.csv", "r");
+$csv_file = fopen("../buki-data-new.csv", "r");
 $buki_data_all = [];
 $row_count = -1;
 while($buki_data_all_line = fgetcsv($csv_file)){ // 行にデータがある限り繰り返す？
